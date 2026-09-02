@@ -7,7 +7,10 @@ const path = require("path");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const postRoutes = require("./routes/postRoutes");
-const { notFound, errorHandler } = require("./middleware/errorHandler");
+const {
+  notFound,
+  errorHandler,
+} = require("./middleware/errorHandler");
 
 const app = express();
 
@@ -31,7 +34,7 @@ const allowedOrigins = new Set([
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow non-browser/server-to-server requests
+    // Allow requests without an Origin header
     if (!origin) {
       return callback(null, true);
     }
@@ -43,7 +46,6 @@ const corsOptions = {
     }
 
     console.log("Blocked CORS origin:", origin);
-
     return callback(new Error(`CORS blocked origin: ${origin}`));
   },
 
@@ -73,7 +75,6 @@ const corsOptions = {
 |--------------------------------------------------------------------------
 */
 
-// This handles normal requests AND browser OPTIONS preflight requests.
 app.use(cors(corsOptions));
 
 app.use(express.json({ limit: "5mb" }));
@@ -134,20 +135,27 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-// Start the HTTP server immediately.
-// Connect to MongoDB before accepting application requests.
-const startServer = async () => {
-  try {
-    await connectDB();
+/*
+ * IMPORTANT:
+ * Start listening FIRST so Render can detect the port.
+ * MongoDB connects separately afterward.
+ */
 
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(
+    `Environment: ${process.env.NODE_ENV || "development"}`
+  );
+
+  // Connect to MongoDB after the server starts listening.
+  connectDB()
+    .then(() => {
+      console.log("MongoDB connection established");
+    })
+    .catch((error) => {
+      console.error(
+        "MongoDB connection failed:",
+        error.message
+      );
     });
-  } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  }
-};
-
-startServer();
+});
