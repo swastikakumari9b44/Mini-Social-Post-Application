@@ -7,18 +7,13 @@ const path = require("path");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const postRoutes = require("./routes/postRoutes");
-const {
-  notFound,
-  errorHandler,
-} = require("./middleware/errorHandler");
+const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
 
-connectDB();
-
 /*
 |--------------------------------------------------------------------------
-| CORS Configuration
+| CORS
 |--------------------------------------------------------------------------
 */
 
@@ -28,21 +23,15 @@ const configuredOrigins = (process.env.CLIENT_URL || "")
   .filter(Boolean);
 
 const allowedOrigins = new Set([
-  // Local development
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-
-  // Production Vercel frontend
   "https://mini-social-post-application-black.vercel.app",
-
-  // Additional origins from environment variable
   ...configuredOrigins,
 ]);
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests that do not contain an Origin header
-    // (for example, curl, Render health checks, server-to-server requests).
+    // Allow non-browser/server-to-server requests
     if (!origin) {
       return callback(null, true);
     }
@@ -53,9 +42,9 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    return callback(
-      new Error(`CORS blocked origin: ${origin}`)
-    );
+    console.log("Blocked CORS origin:", origin);
+
+    return callback(new Error(`CORS blocked origin: ${origin}`));
   },
 
   methods: [
@@ -78,16 +67,14 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 
-app.use(cors(corsOptions));
-
-// Explicitly handle browser preflight requests
-app.options("*", cors(corsOptions));
-
 /*
 |--------------------------------------------------------------------------
-| Body Parsers
+| Middleware
 |--------------------------------------------------------------------------
 */
+
+// This handles normal requests AND browser OPTIONS preflight requests.
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: "5mb" }));
 
@@ -99,17 +86,13 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| Static Files
+| Static uploads
 |--------------------------------------------------------------------------
 */
 
-// Serve locally uploaded images.
-// Cloudinary can be used in production if configured.
 app.use(
   "/uploads",
-  express.static(
-    path.join(__dirname, "..", "uploads")
-  )
+  express.static(path.join(__dirname, "..", "uploads"))
 );
 
 /*
@@ -132,7 +115,6 @@ app.get("/api/health", (req, res) => {
 */
 
 app.use("/api/auth", authRoutes);
-
 app.use("/api/posts", postRoutes);
 
 /*
@@ -142,7 +124,6 @@ app.use("/api/posts", postRoutes);
 */
 
 app.use(notFound);
-
 app.use(errorHandler);
 
 /*
@@ -153,6 +134,20 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Start the HTTP server immediately.
+// Connect to MongoDB before accepting application requests.
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
