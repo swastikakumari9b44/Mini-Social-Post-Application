@@ -183,8 +183,11 @@ All responses follow `{ success, message?, data?, pagination? }`.
 See the MongoDB Atlas Setup section above. Use the same connection string for both local development and the deployed Render service (or separate clusters if you prefer).
 
 ## Screenshots
+<img width="1292" height="912" alt="Screenshot 2026-09-02 202913" src="https://github.com/user-attachments/assets/ed7dc051-9228-4073-98f5-add2abe8dc28" />
+<img width="1131" height="846" alt="Screenshot 2026-09-02 203129" src="https://github.com/user-attachments/assets/faa3a529-8a4e-4cdd-a12d-1b956913d01c" />
+<img width="1727" height="902" alt="Screenshot 2026-09-02 203037" src="https://github.com/user-attachments/assets/4a12e2f2-0c35-42c6-94a5-d4f26401d669" />
 
-_Add screenshots of the login page, feed, create-post card, and comments here before submission._
+
 
 ## Future Improvements
 
